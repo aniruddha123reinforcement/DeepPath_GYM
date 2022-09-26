@@ -1,8 +1,11 @@
+
+import gym 
 import numpy as np
+from gym import utils 
 import random
 from utils import *
 
-class Env(object):
+class Knowledgegraph_gym(object):
 	"""knowledge graph environment definition"""
 	def __init__(self, dataPath, task=None):
 		f1 = open(dataPath + 'entity2id.txt')
@@ -41,7 +44,7 @@ class Env(object):
 
 		self.die = 0 # record how many times does the agent choose an invalid path
 
-	def interact(self, state, action):
+	def step(self, state, action):
 		'''
 		This function process the interact from the agent
 		state: is [current_position, target_position] 
@@ -83,7 +86,7 @@ class Env(object):
 				new_state = None
 			return (reward, new_state, done)
 
-	def idx_state(self, idx_list):
+	def reset(self, idx_list):
 		if idx_list != None:
 			curr = self.entity2vec[idx_list[0],:]
 			targ = self.entity2vec[idx_list[1],:]
