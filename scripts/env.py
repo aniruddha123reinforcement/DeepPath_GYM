@@ -1,11 +1,12 @@
 
 import gym 
 import numpy as np
+from gym import spaces
 from gym import utils 
 import random
 from utils import *
 
-class Knowledgegraph_gym(object):
+class Knowledgegraph_gym(gym.Env):
 	"""knowledge graph environment definition"""
 	def __init__(self, dataPath, task=None):
 		f1 = open(dataPath + 'entity2id.txt')
@@ -24,8 +25,10 @@ class Knowledgegraph_gym(object):
 			self.relations.append(line.split()[0])
 		self.entity2vec = np.loadtxt(dataPath + 'entity2vec.bern')
 		self.relation2vec = np.loadtxt(dataPath + 'relation2vec.bern')
-
-
+		self.low = -inf 
+		self.high = inf 
+		self.action_space = spaces.Box(low = self.low, high = self.high, shape = (400,) dtype = np.float32)
+		self.observation_space = spaces.Box(low = self.low, high = self.high, shape = (200,2) dtype = np.float32)
 		self.path = []
 		self.path_relations = []
 
