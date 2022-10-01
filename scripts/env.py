@@ -5,32 +5,11 @@ from gym import spaces
 from gym import utils 
 import random
 from utils import *
+from Preprocessing import preprocessing
 
 class Knowledgegraph_gym(gym.Env):
 	"""knowledge graph environment definition"""
-	def __init__(self, dataPath, task=None):
-		f1 = open(dataPath + 'entity2id.txt')
-		f2 = open(dataPath + 'relation2id.txt')
-		self.entity2id = f1.readlines()
-		self.relation2id = f2.readlines()
-		f1.close()
-		f2.close()
-		self.entity2id_ = {}
-		self.relation2id_ = {}
-		self.relations = []
-		for line in self.entity2id:
-			self.entity2id_[line.split()[0]] =int(line.split()[1])
-		for line in self.relation2id:
-			self.relation2id_[line.split()[0]] = int(line.split()[1])
-			self.relations.append(line.split()[0])
-		self.entity2vec = np.loadtxt(dataPath + 'entity2vec.bern')
-		self.relation2vec = np.loadtxt(dataPath + 'relation2vec.bern')
-		self.low = -inf 
-		self.high = inf 
-		self.action_space = spaces.Box(low = self.low, high = self.high, shape = (400,) dtype = np.float32)
-		self.observation_space = spaces.Box(low = self.low, high = self.high, shape = (200,2) dtype = np.float32)
-		self.path = []
-		self.path_relations = []
+	def __init__(self, task=None):
 
 		# Knowledge Graph for path finding
 		f = open(dataPath + 'kb_env_rl.txt')
@@ -46,6 +25,14 @@ class Knowledgegraph_gym(gym.Env):
 					self.kb.append(line)
 
 		self.die = 0 # record how many times does the agent choose an invalid path
+		
+	def reset(self, idx_list):
+		if idx_list != None:
+			curr = Preprocessing.entity2vec[idx_list[0],:]
+			targ = Preprocessing.entity2vec[idx_list[1],:]
+			return np.expand_dims(np.concatenate((curr, targ - curr)),axis=0)
+		else:
+			return None
 
 	def step(self, state, action):
 		'''
@@ -89,13 +76,6 @@ class Knowledgegraph_gym(gym.Env):
 				new_state = None
 			return (reward, new_state, done)
 
-	def reset(self, idx_list):
-		if idx_list != None:
-			curr = self.entity2vec[idx_list[0],:]
-			targ = self.entity2vec[idx_list[1],:]
-			return np.expand_dims(np.concatenate((curr, targ - curr)),axis=0)
-		else:
-			return None
 
 	def get_valid_actions(self, entityID):
 		actions = set()
