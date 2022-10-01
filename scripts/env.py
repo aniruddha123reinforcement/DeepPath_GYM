@@ -25,11 +25,14 @@ class Knowledgegraph_gym(gym.Env):
 					self.kb.append(line)
 
 		self.die = 0 # record how many times does the agent choose an invalid path
+	        self.observation_space = spaces.Box(low=-inf, high=inf, shape=(,200), dtype=np.float64)
+		self.action_space = spaces.Discrete(400)
+        
 		
 	def reset(self, idx_list):
 		if idx_list != None:
-			curr = Preprocessing.entity2vec[idx_list[0],:]
-			targ = Preprocessing.entity2vec[idx_list[1],:]
+			curr = preprocessing.entity2vec[idx_list[0],:]
+			targ = preprocessing.entity2vec[idx_list[1],:]
 			return np.expand_dims(np.concatenate((curr, targ - curr)),axis=0)
 		else:
 			return None
@@ -41,7 +44,7 @@ class Knowledgegraph_gym(gym.Env):
 		action: an integer
 		return: (reward, [new_postion, target_position], done)
 		'''
-		done = 0 # Whether the episode has finished
+		terminated = 0 # Whether the episode has finished
 		curr_pos = state[0]
 		target_pos = state[1]
 		chosed_relation = self.relations[action]
@@ -57,7 +60,7 @@ class Knowledgegraph_gym(gym.Env):
 			self.die += 1
 			next_state = state # stay in the initial state
 			next_state[-1] = self.die
-			return (reward, next_state, done)
+			return (reward, next_state, terminated)
 		else: # find a valid step
 			path = random.choice(choices)
 			self.path.append(path[2] + ' -> ' + path[1])
@@ -74,7 +77,7 @@ class Knowledgegraph_gym(gym.Env):
 				done = 1
 				reward = 0
 				new_state = None
-			return (reward, new_state, done)
+			return (reward, new_state, terminated)
 
 
 	def get_valid_actions(self, entityID):
