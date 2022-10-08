@@ -27,15 +27,10 @@ class Knowledgegraph_gym(gym.Env):
 		self.die = 0 # record how many times does the agent choose an invalid path
 	        self.observation_space = spaces.Box(low=-inf, high=inf, shape=(,200), dtype=np.float64)
 		self.action_space = spaces.Discrete(400)
+		self.state = None
         
 		
-	def reset(self, idx_list):
-		if idx_list != None:
-			curr = preprocessing.entity2vec[idx_list[0],:]
-			targ = preprocessing.entity2vec[idx_list[1],:]
-			return np.expand_dims(np.concatenate((curr, targ - curr)),axis=0)
-		else:
-			return None
+	
 
 	def step(self, state, action):
 		'''
@@ -45,22 +40,20 @@ class Knowledgegraph_gym(gym.Env):
 		return: (reward, [new_postion, target_position], done)
 		'''
 		terminated = 0 # Whether the episode has finished
-		curr_pos = state[0]
-		target_pos = state[1]
+		curr_pos, target_pos,self.die = self.state
 		chosed_relation = self.relations[action]
 		choices = []
 		for line in self.kb:
 			triple = line.rsplit()
-			e1_idx = self.entity2id_[triple[0]]
+			e1_idx = preprocessing.entity2id_[triple[0]]
 			
-			if curr_pos == e1_idx and triple[2] == chosed_relation and triple[1] in self.entity2id_:
+			if curr_pos == e1_idx and triple[2] == chosed_relation and triple[1] in preprocessing.entity2id_:
 				choices.append(triple)
 		if len(choices) == 0:
 			reward = -1
 			self.die += 1
-			next_state = state # stay in the initial state
-			next_state[-1] = self.die
-			return (reward, next_state, terminated)
+			self.state = (curr_pos, target_pos, self.die) # stay in the initial state
+			return np.array(self.state,dtype=np.float32),reward, terminated, False, {}
 		else: # find a valid step
 			path = random.choice(choices)
 			self.path.append(path[2] + ' -> ' + path[1])
@@ -68,16 +61,16 @@ class Knowledgegraph_gym(gym.Env):
 			# print('Find a valid step', path)
 			# print('Action index', action)
 			self.die = 0
-			new_pos = self.entity2id_[path[1]]
+			new_pos = preprocessing.entity2id_[path[1]]
 			reward = 0
-			new_state = [new_pos, target_pos, self.die]
+			self.state = (new_pos, target_pos, self.die)
 
 			if new_pos == target_pos:
 				print('Find a path:', self.path)
-				done = 1
-				reward = 0
-				new_state = None
-			return (reward, new_state, terminated)
+				terminated = 1
+				reward = 1
+				self.state = None
+			return np.array(self.state,dtype=np.float32),reward, terminated, False, {}
 
 
 	def get_valid_actions(self, entityID):
