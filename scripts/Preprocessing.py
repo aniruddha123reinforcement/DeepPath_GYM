@@ -26,3 +26,10 @@ class Preprocessing(object):
 		self.path = []
 		self.path_relations = []
 
+def idx_state(self, idx_list):
+		if idx_list != None:
+			curr = self.entity2vec[idx_list[0],:]
+			targ = self.entity2vec[idx_list[1],:]
+			return np.expand_dims(np.concatenate((curr, targ - curr)),axis=0)
+		else:
+			return None
