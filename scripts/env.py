@@ -50,7 +50,7 @@ class Knowledgegraph_gym(gym.Env):
 		state_idx = [env.entity2id_[sample[0]], env.entity2id_[sample[1]], 0]
         	self.state = preprocessing.idx_state(state_idx)
 		self.steps_beyond_terminated = None
-		return self.state,{}
+		return np.array(self.state,dtype = np.float32),{}
 	
 
 	def step(self, action):
