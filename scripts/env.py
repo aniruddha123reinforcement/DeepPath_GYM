@@ -9,13 +9,13 @@ from Preprocessing import preprocessing
 
 class Knowledgegraph_gym(gym.Env):
 	"""knowledge graph environment definition"""
-	def __init__(self, task=None):
+	def __init__(self, dataPath, task=None):
 
 		# Knowledge Graph for path finding
 		f = open(dataPath + 'kb_env_rl.txt')
 		kb_all = f.readlines()
 		f.close()
-
+                
 		self.kb = []
 		if task != None:
 			relation = task.split()[2]
@@ -25,22 +25,39 @@ class Knowledgegraph_gym(gym.Env):
 					self.kb.append(line)
 
 		self.die = 0 # record how many times does the agent choose an invalid path
-	        self.observation_space = spaces.Box(low=-inf, high=inf, shape=(,200), dtype=np.float64)
+	        self.observation_space = spaces.Box(low=-inf, high=inf, shape=(3,200), dtype=np.float64)
 		self.action_space = spaces.Discrete(400)
 		self.state = None
-        
+		self.steps_beyond_terminated = None
 		
+	def reset(self, *,dataPath,kb,kb_inv, seed: Optional[int] = None,options: Optional[dict] = None)
+		super.reset(seed=seed)
+		#Call env.make before this 
+		#Call gym.make(datapath,train[i_episode])
+                f = open(dataPath_ + '/train.pairs')
+	        train_data = f.readlines()
+	        f.close()
+	        train_pairs = []
+	
+	       for line in train_data:
+		e1 = line.split(',')[0].replace('thing$','')
+		e2 = line.split(',')[1].split(':')[0].replace('thing$','')
+		if (e1 not in kb.entities) or (e2 not in kb.entities):
+			continue
+		train_pairs.append((e1,e2))
+		label = 1 if line[-2] == '+' else 0
+		sample = train_pairs.split()
+		state_idx = [env.entity2id_[sample[0]], env.entity2id_[sample[1]], 0]
+        	self.state = preprocessing.idx_state(state_idx)
+		self.steps_beyond_terminated = None
+		return 
 	
 
-	def step(self, state, action):
-		'''
-		This function process the interact from the agent
-		state: is [current_position, target_position] 
-		action: an integer
-		return: (reward, [new_postion, target_position], done)
-		'''
+	def step(self, action):
+		assert self.action_space.contains(action), f"{action!r} ({type(action)}) invalid"
+		assert self.state is not None, "Call reset before using step method."
 		terminated = 0 # Whether the episode has finished
-		curr_pos, target_pos,self.die = self.state
+		curr_pos, target_pos,0 = self.state
 		chosed_relation = self.relations[action]
 		choices = []
 		for line in self.kb:
