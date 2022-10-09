@@ -5,11 +5,33 @@ from gym import spaces
 from gym import utils 
 import random
 from utils import *
-from Preprocessing import preprocessing
+
 
 class Knowledgegraph_gym(gym.Env):
 	"""knowledge graph environment definition"""
 	def __init__(self, dataPath, task=None):
+	
+		f1 = open(dataPath + 'entity2id.txt')
+		f2 = open(dataPath + 'relation2id.txt')
+		self.entity2id = f1.readlines()
+		self.relation2id = f2.readlines()
+		f1.close()
+		f2.close()
+		self.entity2id_ = {}
+		self.relation2id_ = {}
+		self.relations = []
+		for line in self.entity2id:
+			self.entity2id_[line.split()[0]] =int(line.split()[1])
+		for line in self.relation2id:
+			self.relation2id_[line.split()[0]] = int(line.split()[1])
+			self.relations.append(line.split()[0])
+		self.entity2vec = np.loadtxt(dataPath + 'entity2vec.bern')
+		self.relation2vec = np.loadtxt(dataPath + 'relation2vec.bern')
+
+
+		self.path = []
+		self.path_relations = []
+
 
 		# Knowledge Graph for path finding
 		f = open(dataPath + 'kb_env_rl.txt')
@@ -30,6 +52,10 @@ class Knowledgegraph_gym(gym.Env):
 		self.state = None
 		self.steps_beyond_terminated = None
 		
+		
+		
+		
+		
 	def reset(self, *,dataPath,kb,kb_inv, seed: Optional[int] = None,options: Optional[dict] = None)
 		super.reset(seed=seed)
 		#Call env.make before this 
@@ -48,7 +74,7 @@ class Knowledgegraph_gym(gym.Env):
 		label = 1 if line[-2] == '+' else 0
 		sample = train_pairs.split()
 		state_idx = [env.entity2id_[sample[0]], env.entity2id_[sample[1]], 0]
-        	self.state = preprocessing.idx_state(state_idx)
+        	self.state = self.idx_state(state_idx)
 		self.steps_beyond_terminated = None
 		return np.array(self.state,dtype = np.float32),{}
 	
@@ -62,9 +88,9 @@ class Knowledgegraph_gym(gym.Env):
 		choices = []
 		for line in self.kb:
 			triple = line.rsplit()
-			e1_idx = preprocessing.entity2id_[triple[0]]
+			e1_idx = self.entity2id_[triple[0]]
 			
-			if curr_pos == e1_idx and triple[2] == chosed_relation and triple[1] in preprocessing.entity2id_:
+			if curr_pos == e1_idx and triple[2] == chosed_relation and triple[1] in self.entity2id_:
 				choices.append(triple)
 		if len(choices) == 0:
 			reward = -1
@@ -78,7 +104,7 @@ class Knowledgegraph_gym(gym.Env):
 			# print('Find a valid step', path)
 			# print('Action index', action)
 			self.die = 0
-			new_pos = preprocessing.entity2id_[path[1]]
+			new_pos = self.entity2id_[path[1]]
 			reward = 0
 			self.state = (new_pos, target_pos, self.die)
 
