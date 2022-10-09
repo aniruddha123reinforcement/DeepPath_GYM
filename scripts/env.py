@@ -47,11 +47,18 @@ class Knowledgegraph_gym(gym.Env):
 					self.kb.append(line)
 
 		self.die = 0 # record how many times does the agent choose an invalid path
-	        self.observation_space = spaces.Box(low=-inf, high=inf, shape=(3,200), dtype=np.float64)
+	        self.observation_space = spaces.Box(low=-inf, high=inf, shape=(200,), dtype=np.float32)
 		self.action_space = spaces.Discrete(400)
 		self.state = None
 		self.steps_beyond_terminated = None
 		
+	def idx_state(self, idx_list):
+		if idx_list != None:
+			curr = self.entity2vec[idx_list[0],:]
+			targ = self.entity2vec[idx_list[1],:]
+			return np.expand_dims(np.concatenate((curr, targ - curr)),axis=0)
+		else:
+			return None	
 		
 		
 		
